@@ -138,11 +138,14 @@ class Rtree(object):
         #         # -------------------------------------------------------- #
 
         # --------- 新的方法 ------------- #
+
         # 将新的聚类中心作为分裂的两个点
         data_list = []
         for i in range(len(self.leaves)):
             data_list.append([self.leaves[i].MBR['xmin'], self.leaves[i].MBR['ymin']])
+
         data_list = np.asarray(data_list)
+
         kmeans = KMeans(n_clusters=2, random_state=0).fit(data_list)
         corner_list = kmeans.cluster_centers_
         # print(corner_list)
@@ -151,6 +154,10 @@ class Rtree(object):
         # 聚类中心点不是数据中有的点，要找出离它最近的有效点
         point = 0
         distance = 0
+
+        # for item in corner_list:
+        #     addr.append()
+
         for item in corner_list:
             for i in range(len(self.leaves)) :
                 if i not in addr:
@@ -162,21 +169,22 @@ class Rtree(object):
             distance = 0
 
         # print(addr)
-        [t1, t2] = addr
+        # [t1, t2] = addr
 
         # print(t1)
         # print(t2)
 
-        t1 = int(t1)
-        t2 = int(t2)
+        t1 = int(min(addr))
+        t2 = int(max(addr))
         # --------- end ----------------- #
 
-        # 考虑到后面的方式，应该先将大的选出：
-        temp = 0
-        if t1 > t2:
-            temp = t2
-            t2 = t1
-            t1 = temp
+
+        # # 考虑到后面的方式，应该先将大的选出：
+        # temp = 0
+        # if t1 > t2:
+        #     temp = t2
+        #     t2 = t1
+        #     t1 = temp
 
         n2 = self.leaves.pop(t2)
         n2.father = leaf1

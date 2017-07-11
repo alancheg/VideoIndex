@@ -135,9 +135,15 @@ class Rtree(object):
                 # -------------------------------------------------------- #
 
         # --------- 新的方法 ------------- #
+        # 找出数据中的质心，从而确定中心点
+        # data_list = []
+        #
+        #
         # distance = 0
-        # for i in range(len(self.leaves)):
-        #     for j in range(i+1, len(self.leaves)):
+        # addr = []
+        # for i in range(data_list):
+        #     for j in range(data_list):
+        #         pass
 
         # --------- end ----------------- #
 

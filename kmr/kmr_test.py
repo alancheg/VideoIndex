@@ -50,10 +50,15 @@ if __name__ == "__main__":
 
     # ------------- 插入节点 -------------------------- #
     print("开始构建索引")
+    process = 0
     for i in range(data_length):
+
         # ----- 进度显示 ----- #
-        print(str(i/data_length) + "%")
+        if (i/data_length) - process > 0.1:
+            print(str(i/data_length) + "%")
+            process = i/data_length
         # -------------------- #
+
         root = Insert(root, n[i])
     t1 = time()
     # print ('Inserting ...')
@@ -64,6 +69,7 @@ if __name__ == "__main__":
     time_search_start = time()
     x = root.Search(merge(n[0].MBR, n[1].MBR))
     time_search_end = time()
+
     # print ('Searching ...')
     print("检索完成，耗时 :")
     print (time_search_end - time_search_start)
