@@ -36,7 +36,7 @@ class Rtree(object):
         self.M = M
         self.father = father
 
-# ChooseLeaf选择插入的节点。
+    # ChooseLeaf选择插入的节点。
     def ChooseLeaf(self, node):
         # 如果当前节点的层数比要插入的节点高1层，表明找到了合适的节点。
         if self.level == node.level + 1:
@@ -66,12 +66,15 @@ class Rtree(object):
         #     return MassNode1, MassNode2
 
         # 如果当前节点没有父节点，则必然需要产生父节点来容纳分裂的两个节点。
+        # def leaf_distance(center, leaf):
+        #     return ((leaf.MBR['xmin'] - center.MBR['xmin']) ** 2 + (leaf.MBR['ymin'] - center.MBR['ymin']) ** 2) ** 0.5
+
         if self.father is None:
             # 父节点的层级比当前节点多1。
             self.father = Rtree(level = self.level + 1, m = self.m, M = self.M)
             self.father.leaves.append(self)
 
-        # 产生新的节点，m、M和father都与当前节点相同。
+        # 产生新的节点，m、M 和 father 都与当前节点相同。
         leaf1 = Rtree(level = self.level, m = self.m, M = self.M, father = self.father)
         leaf2 = Rtree(level = self.level, m = self.m, M = self.M, father = self.father)
 
@@ -154,7 +157,6 @@ class Rtree(object):
                     t1 = i
                     t2 = j
 
-
         # --------- 新的方法 ------------- #
         # 找出数据中的质心，从而确定中心点
         # data_list = []
@@ -180,15 +182,44 @@ class Rtree(object):
 
     # PickNext为两组节点分配一个子节点。
     def PickNext(self, leaf1, leaf2):
+        # 距离计算函数
+        def leaf_distance(center, leaf):
+            return ((leaf.MBR['xmin'] - center.MBR['xmin']) ** 2 + (leaf.MBR['ymin'] - center.MBR['ymin']) ** 2) ** 0.5
+
+        # # ------------------- old way -------- #
+        # d = 0
+        # t = 0
+        #
+        # # 遍历子节点，找到插入两组节点后面积增加差值最大的一项。
+        # for i in range(len(self.leaves)):
+        #     d1 = space_increase(merge(leaf1.MBR, self.leaves[i].MBR), leaf1.MBR)
+        #     d2 = space_increase(merge(leaf2.MBR, self.leaves[i].MBR), leaf2.MBR)
+        #     if abs(d1 - d2) > abs(d):
+        #         d = d1 - d2
+        #         t = i
+        #
+        # if d > 0:
+        #     target = self.leaves.pop(t)
+        #     leaf2.MBR = merge(leaf2.MBR, target.MBR)
+        #     target.father = leaf2
+        #     leaf2.leaves.append(target)
+        # else:
+        #     target = self.leaves.pop(t)
+        #     leaf1.MBR = merge(leaf1.MBR, target.MBR)
+        #     target.father = leaf1
+        #     leaf1.leaves.append(target)
+        # # ------------------ old way end --------- #
+
+        # 传统的方法是找出使得面积最大的子节点
+        # 新的方法是找出使得节点更加紧密的子节点
+        # ------------------- new way ------------ #
         d = 0
         t = 0
-        # 遍历子节点，找到插入两组节点后面积增加差值最大的一项。
-        for i in range(len(self.leaves)):
-            d1 = space_increase(merge(leaf1.MBR, self.leaves[i].MBR), leaf1.MBR)
-            d2 = space_increase(merge(leaf2.MBR, self.leaves[i].MBR), leaf2.MBR)
-            if abs(d1 - d2) > abs(d):
-                d = d1 - d2
-                t = i
+
+        # 找到一个子节点，分配给一个离它最近的面积
+        if leaf_distance(leaf2, self.leaves[t]) > leaf_distance(leaf1, self.leaves[t]):
+            d = 1
+
         if d > 0:
             target = self.leaves.pop(t)
             leaf2.MBR = merge(leaf2.MBR, target.MBR)
@@ -199,6 +230,8 @@ class Rtree(object):
             leaf1.MBR = merge(leaf1.MBR, target.MBR)
             target.father = leaf1
             leaf1.leaves.append(target)
+        # ------------------- new way end --------- #
+
 
     # AdjustTree自底向上调整R树。
     def AdjustTree(self):

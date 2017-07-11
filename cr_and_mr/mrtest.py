@@ -67,7 +67,7 @@ if __name__ == "__main__":
     # print (time_search_end - time_search_start)
 
     # --------- use performance_test get the avg search time ---- #
-    print("100 条随机检索的平均用时为：")
+    print(" mr 树 中 100 条随机检索的平均用时为：")
     print(performance_test(root, [800, 800], 100))
 
     # -------------- 节点删除 -------------------------- #
