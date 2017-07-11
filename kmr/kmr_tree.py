@@ -2,12 +2,15 @@
 data:2017-7-10
 author:alancheg
 
-本文件基于已有的 R 树算法，主要改进了相关的节点分裂算法
+本程序主要实现的是 k_means r 树算法
+分裂之后的点坐标为聚类的中心
 """
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #定义存储的对象，包含其位置信息MBR，level固定为0表明在底层，index为其在数据库中的索引，father为其父节点。
 import random
+from sklearn.cluster import KMeans
+import numpy as np
 
 
 class node(object):
@@ -111,35 +114,69 @@ class Rtree(object):
     def PickSeeds(self, leaf1, leaf2):
         """
         原始的方法是找到差值最大的项作为相关的点。
-        新的方法是找到一组节点中的质心作为节点
+        新的方法是找到一组节点中的聚类中心作为节点
 
-        求出一组数的质心，再求出离质心最近的点
+        求出一组数的质心，再求出离聚类中心最近的点
         """
-        d = 0
-        t1 = 0
-        t2 = 0
-        # 遍历所有可能的子节点组合，寻找差值最大的项。
-        for i in range(len(self.leaves)):
-            for j in range(i + 1, len(self.leaves)):
-                # -------------------------------------------------------- #
-                MBR_new = merge(self.leaves[i].MBR, self.leaves[j].MBR) # 合并两个 MBR
-                S_new = 1.0 * (MBR_new['xmax'] - MBR_new['xmin']) * (MBR_new['ymax'] - MBR_new['ymin'])
-
-                S1 = 1.0 * (self.leaves[i].MBR['xmax'] - self.leaves[i].MBR['xmin']) * (self.leaves[i].MBR['ymax'] - self.leaves[i].MBR['ymin'])
-                S2 = 1.0 * (self.leaves[j].MBR['xmax'] - self.leaves[j].MBR['xmin']) * (self.leaves[j].MBR['ymax'] - self.leaves[j].MBR['ymin'])
-
-                if S_new - S1 - S2 > d:
-                    t1 = i
-                    t2 = j
-                    d = S_new - S1 - S2
-                # -------------------------------------------------------- #
+        # d = 0
+        # t1 = 0
+        # t2 = 0
+        # # 遍历所有可能的子节点组合，寻找差值最大的项。
+        # for i in range(len(self.leaves)):
+        #     for j in range(i + 1, len(self.leaves)):
+        #         # -------------------------------------------------------- #
+        #         MBR_new = merge(self.leaves[i].MBR, self.leaves[j].MBR) # 合并两个 MBR
+        #         S_new = 1.0 * (MBR_new['xmax'] - MBR_new['xmin']) * (MBR_new['ymax'] - MBR_new['ymin'])
+        #
+        #         S1 = 1.0 * (self.leaves[i].MBR['xmax'] - self.leaves[i].MBR['xmin']) * (self.leaves[i].MBR['ymax'] - self.leaves[i].MBR['ymin'])
+        #         S2 = 1.0 * (self.leaves[j].MBR['xmax'] - self.leaves[j].MBR['xmin']) * (self.leaves[j].MBR['ymax'] - self.leaves[j].MBR['ymin'])
+        #
+        #         if S_new - S1 - S2 > d:
+        #             t1 = i
+        #             t2 = j
+        #             d = S_new - S1 - S2
+        #         # -------------------------------------------------------- #
 
         # --------- 新的方法 ------------- #
-        # distance = 0
-        # for i in range(len(self.leaves)):
-        #     for j in range(i+1, len(self.leaves)):
+        # 将新的聚类中心作为分裂的两个点
+        data_list = []
+        for i in range(len(self.leaves)):
+            data_list.append([self.leaves[i].MBR['xmin'], self.leaves[i].MBR['ymin']])
+        data_list = np.asarray(data_list)
+        kmeans = KMeans(n_clusters=2, random_state=0).fit(data_list)
+        corner_list = kmeans.cluster_centers_
+        # print(corner_list)
 
+        addr = []
+        # 聚类中心点不是数据中有的点，要找出离它最近的有效点
+        point = 0
+        distance = 0
+        for item in corner_list:
+            for i in range(len(self.leaves)) :
+                if i not in addr:
+                    if abs((self.leaves[i].MBR['xmin'] - item[0]) * (self.leaves[i].MBR['ymin'] - item[1])) > distance:
+                        point = i
+
+            addr.append(point)
+            point = 0
+            distance = 0
+
+        # print(addr)
+        [t1, t2] = addr
+
+        # print(t1)
+        # print(t2)
+
+        t1 = int(t1)
+        t2 = int(t2)
         # --------- end ----------------- #
+
+        # 考虑到后面的方式，应该先将大的选出：
+        temp = 0
+        if t1 > t2:
+            temp = t2
+            t2 = t1
+            t1 = temp
 
         n2 = self.leaves.pop(t2)
         n2.father = leaf1

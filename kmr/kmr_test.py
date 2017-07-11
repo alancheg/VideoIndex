@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from r_tree_base.rtree import *
+from kmr.kmr_tree import *
 from random import uniform
 from time import time
 import csv
@@ -51,6 +51,9 @@ if __name__ == "__main__":
     # ------------- 插入节点 -------------------------- #
     print("开始构建索引")
     for i in range(data_length):
+        # ----- 进度显示 ----- #
+        print(str(i/data_length) + "%")
+        # -------------------- #
         root = Insert(root, n[i])
     t1 = time()
     # print ('Inserting ...')
