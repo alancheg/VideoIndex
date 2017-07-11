@@ -11,6 +11,7 @@ author:alancheg
 import random
 from sklearn.cluster import KMeans
 import numpy as np
+from time import time
 
 
 class node(object):
@@ -140,6 +141,8 @@ class Rtree(object):
         # --------- 新的方法 ------------- #
 
         # 将新的聚类中心作为分裂的两个点
+
+        cluster_time_start = time()
         data_list = []
         for i in range(len(self.leaves)):
             data_list.append([self.leaves[i].MBR['xmin'], self.leaves[i].MBR['ymin']])
@@ -149,6 +152,8 @@ class Rtree(object):
         kmeans = KMeans(n_clusters=2, random_state=0).fit(data_list)
         corner_list = kmeans.cluster_centers_
         # print(corner_list)
+        cluster_time_end = time()
+        print("cluster_time = " + str(cluster_time_end - cluster_time_start))
 
         addr = []
         # 聚类中心点不是数据中有的点，要找出离它最近的有效点
@@ -157,6 +162,8 @@ class Rtree(object):
 
         # for item in corner_list:
         #     addr.append()
+
+        search_time_start = time()
 
         for item in corner_list:
             for i in range(len(self.leaves)) :
@@ -176,6 +183,9 @@ class Rtree(object):
 
         t1 = int(min(addr))
         t2 = int(max(addr))
+        search_time_end = time()
+        print("time_search_node = " + str(search_time_end - search_time_start))
+
         # --------- end ----------------- #
 
 

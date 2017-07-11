@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from r_tree_myself.rtree import *
+from cr_and_mr.mr_tree import *
 from random import uniform
 from time import time
 import csv

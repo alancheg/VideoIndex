@@ -8,7 +8,7 @@ author:alancheg
 # -*- coding: utf-8 -*-
 #定义存储的对象，包含其位置信息MBR，level固定为0表明在底层，index为其在数据库中的索引，father为其父节点。
 import random
-
+from math import sqrt
 
 class node(object):
     def __init__(self, MBR = None, level = 0, index = None, father = None):
@@ -108,31 +108,50 @@ class Rtree(object):
         self.father.MBR = merge(self.father.MBR, leaf2.MBR)
 
     # PickSeeds为两组节点分配子节点。
+    # todo:增加质心属性，从而提高 R 树的分裂效率
     def PickSeeds(self, leaf1, leaf2):
         """
-        原始的方法是找到差值最大的项作为相关的点。
-        新的方法是找到一组节点中的质心作为节点
+        MR 树
+        此版本的改进是通过引入质心的属性来提高整个 R 树的节点分裂效率
 
-        求出一组数的质心，再求出离质心最近的点
         """
+        def leaf_distance(center, leaf):
+            return ((leaf.MBR['xmin'] - center.MBR['xmin']) ** 2 + (leaf.MBR['ymin'] - center.MBR['ymin']) ** 2) ** 0.5
+
+
         d = 0
         t1 = 0
         t2 = 0
-        # 遍历所有可能的子节点组合，寻找差值最大的项。
+
+        # # 遍历所有可能的子节点组合，寻找差值最大的项。
+        # for i in range(len(self.leaves)):
+        #     for j in range(i + 1, len(self.leaves)):
+        #         # -------------------------------------------------------- #
+        #         MBR_new = merge(self.leaves[i].MBR, self.leaves[j].MBR) # 合并两个 MBR
+        #         S_new = 1.0 * (MBR_new['xmax'] - MBR_new['xmin']) * (MBR_new['ymax'] - MBR_new['ymin'])
+        #
+        #         S1 = 1.0 * (self.leaves[i].MBR['xmax'] - self.leaves[i].MBR['xmin']) * (self.leaves[i].MBR['ymax'] - self.leaves[i].MBR['ymin'])
+        #         S2 = 1.0 * (self.leaves[j].MBR['xmax'] - self.leaves[j].MBR['xmin']) * (self.leaves[j].MBR['ymax'] - self.leaves[j].MBR['ymin'])
+        #
+        #         if S_new - S1 - S2 > d:
+        #             t1 = i
+        #             t2 = j
+        #             d = S_new - S1 - S2
+        #         # -------------------------------------------------------- #
+
+        # 计算出最小距离点
+        # 通过随机指定两个值，计算点的距离和，找出能够使总体距离和最小的值
         for i in range(len(self.leaves)):
-            for j in range(i + 1, len(self.leaves)):
-                # -------------------------------------------------------- #
-                MBR_new = merge(self.leaves[i].MBR, self.leaves[j].MBR) # 合并两个 MBR
-                S_new = 1.0 * (MBR_new['xmax'] - MBR_new['xmin']) * (MBR_new['ymax'] - MBR_new['ymin'])
+            for j in range(i+1, len(self.leaves)):
 
-                S1 = 1.0 * (self.leaves[i].MBR['xmax'] - self.leaves[i].MBR['xmin']) * (self.leaves[i].MBR['ymax'] - self.leaves[i].MBR['ymin'])
-                S2 = 1.0 * (self.leaves[j].MBR['xmax'] - self.leaves[j].MBR['xmin']) * (self.leaves[j].MBR['ymax'] - self.leaves[j].MBR['ymin'])
-
-                if S_new - S1 - S2 > d:
+                sum_of_distance = 0
+                for k in range(len(self.leaves)):
+                    if k is not i and k is not j:
+                        sum_of_distance += min(leaf_distance(self.leaves[i], self.leaves[k]), leaf_distance(self.leaves[j], self.leaves[k]))
+                if sum_of_distance > d:
                     t1 = i
                     t2 = j
-                    d = S_new - S1 - S2
-                # -------------------------------------------------------- #
+
 
         # --------- 新的方法 ------------- #
         # 找出数据中的质心，从而确定中心点
