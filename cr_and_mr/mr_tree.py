@@ -148,7 +148,9 @@ class Rtree(object):
                 for k in range(len(self.leaves)):
                     if k is not i and k is not j:
                         sum_of_distance += min(leaf_distance(self.leaves[i], self.leaves[k]), leaf_distance(self.leaves[j], self.leaves[k]))
+
                 if sum_of_distance > d:
+                    d = sum_of_distance
                     t1 = i
                     t2 = j
 

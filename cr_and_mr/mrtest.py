@@ -4,6 +4,8 @@ from cr_and_mr.mr_tree import *
 from random import uniform
 from time import time
 import csv
+from performance_test import performance_test
+
 
 # 数据的格式
 # img_name,feature_name,feature_num,cor_x,cor_y
@@ -27,7 +29,6 @@ def data_generate(path):
             i += 1
 
     return data, data_length
-
 
 if __name__ == "__main__":
     # data = {}
@@ -57,13 +58,17 @@ if __name__ == "__main__":
     print ("索引构建完成，总共有 " + str(data_length) + " 条数据，耗时：")
     print (t1 - t0)
 
-    # ------------- 搜索节点 --------------------------- #
-    time_search_start = time()
-    x = root.Search(merge(n[0].MBR, n[1].MBR))
-    time_search_end = time()
-    # print ('Searching ...')
-    print("检索完成，耗时 :")
-    print (time_search_end - time_search_start)
+    # # ------------- 搜索节点 --------------------------- #
+    # time_search_start = time()
+    # x = root.Search(merge(n[0].MBR, n[1].MBR))
+    # time_search_end = time()
+    # # print ('Searching ...')
+    # print("检索完成，耗时 :")
+    # print (time_search_end - time_search_start)
+
+    # --------- use performance_test get the avg search time ---- #
+    print("100 条随机检索的平均用时为：")
+    print(performance_test(root, [800, 800], 100))
 
     # -------------- 节点删除 -------------------------- #
     # for i in range(100000):
