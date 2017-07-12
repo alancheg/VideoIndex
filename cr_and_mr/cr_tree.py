@@ -74,6 +74,11 @@ class Rtree(object):
             father_node.leaves.append(leaf)
             father_node.MBR = merge(father_node.MBR, leaf.MBR)
 
+        def _assign_corner(corner, father_node):
+            for leaf in corner:
+                father_node.leaves.append(leaf)
+                father_node.MBR = merge(father_node.MBR, leaf.MBR)
+
         def _add_min_mbr_node(node1, node2):
             def _mbr_squre(mbr):
                 return abs(mbr['xmax'] - mbr['xmin']) * abs(mbr['ymax'] - mbr['ymin'])
@@ -106,26 +111,71 @@ class Rtree(object):
         Node1 = Rtree(level = self.level, m = self.m, M = self.M, father = self.father)
         Node2 = Rtree(level = self.level, m = self.m, M = self.M, father = self.father)
 
+        # --------------- cbs splitting algo ----------- #
+        """
+        此算法的核心思想是，
+        将节点分配到4个不同的区域，然后选出能够使得区域相对平衡的两个区域
+        然后构建出最小矩形
+        """
+        corner = {}
+        for i in range(1, 4):
+            corner[i] = []
+
+        # 通过找到中心点从而将区域分成四个部分
         (CovRectXcen, CovRectYcen) = (((self.MBR['xmin'] + self.MBR['xmax'])/2),
                                       ((self.MBR['ymin'] + self.MBR['ymax'])/2))
 
-        # 将节点分配到不同的区域
+        # 将节点分到4 个区域
         for node in self.leaves:
             (ObjXcen, ObjYcen) = (((node.MBR['xmin'] + node.MBR['xmax'])/2),
                                   ((node.MBR['ymin'] + node.MBR['ymax'])/2))
-
             if ObjXcen > CovRectXcen:
                 if ObjYcen > CovRectYcen:
-                    _assign_leaf(node, Node2)
+                    # _assign_leaf(node, Node2)
+                    corner[2].append(node)
                 else:
-                    _assign_leaf(node, Node1)
+                    corner[3].append(node)
             else:
                 if ObjYcen > CovRectYcen:
                     # corner1.append(node)
-                    _assign_leaf(node, Node2)
+                    # _assign_leaf(node, Node2)
+                    corner[1].append(node)
                 else:
                     # corner0.append(node)
-                    _assign_leaf(node, Node1)
+                    # _assign_leaf(node, Node1)
+                    corner[0].append(node)
+
+        if abs(len(corner[1])  + len(corner[0]) - len(corner[2]) - len(corner[3])) > abs(len(corner[1]) + len(corner[2]) - len(corner[0]) - len(corner[3])):
+            # 如果左右的数目差值大于上下的，则将节点分为上下
+            _assign_corner(corner[1], Node1)
+            _assign_corner(corner[2], Node1)
+
+            _assign_corner(corner[3], Node2)
+            _assign_corner(corner[0], Node2)
+        else:
+            _assign_corner(corner[1], Node1)
+            _assign_corner(corner[0], Node1)
+
+            _assign_corner(corner[2], Node2)
+            _assign_corner(corner[3], Node2)
+
+        # # 将节点分配到不同的区域
+        # for node in self.leaves:
+        #     (ObjXcen, ObjYcen) = (((node.MBR['xmin'] + node.MBR['xmax'])/2),
+        #                           ((node.MBR['ymin'] + node.MBR['ymax'])/2))
+        #
+        #     if ObjXcen > CovRectXcen:
+        #         if ObjYcen > CovRectYcen:
+        #             _assign_leaf(node, Node2)
+        #         else:
+        #             _assign_leaf(node, Node1)
+        #     else:
+        #         if ObjYcen > CovRectYcen:
+        #             # corner1.append(node)
+        #             _assign_leaf(node, Node2)
+        #         else:
+        #             # corner0.append(node)
+        #             _assign_leaf(node, Node1)
 
         while(len(Node1.leaves) < Node1.m):
             _add_min_mbr_node(Node2, Node1)
