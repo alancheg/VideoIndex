@@ -8,7 +8,7 @@ from performance_test import performance_test
 
 # 数据的格式
 # img_name,feature_name,feature_num,cor_x,cor_y
-def data_generate(path, length=10000):
+def data_generate(path, length=200000):
     # 生成标准的位置信息
     data = {}
     data_length = 0
@@ -44,45 +44,45 @@ if __name__ == "__main__":
 
     #设置一个根节点，m=3，M=7
     # root = Rtree(m=3, M=7)
-    for k in range(3, 49):
 
-        root = Rtree(m=k, M=k*3)
-        n = []
+    k = 25
+    root = Rtree(m=k, M=k*2 + 1)
+    n = []
 
-        for i in range(data_length):
-            n.append(node(MBR = data[i], index = i))
-        t0 = time()
-        print("数据加载完成，总共 " + str(data_length) + " 条数据" )
+    for i in range(data_length):
+        n.append(node(MBR = data[i], index = i))
+    t0 = time()
+    print("数据加载完成，总共 " + str(data_length) + " 条数据" )
 
-        # ------------- 插入节点 -------------------------- #
-        print("开始构建索引")
-        rate = 0
-        for i in range(data_length):
-            # if i/data_length - rate > 0.01:
-            #     print('rate - > ' + str((i/data_length) * 100) + '%')
-            #     rate = i/data_length
+    # ------------- 插入节点 -------------------------- #
+    print("开始构建索引")
+    rate = 0
+    for i in range(data_length):
+        # if i/data_length - rate > 0.01:
+        #     print('rate - > ' + str((i/data_length) * 100) + '%')
+        #     rate = i/data_length
 
-            root = Insert(root, n[i])
-        t1 = time()
-        # print ('Inserting ...')
-        print ("索引构建完成，总共有 " + str(data_length) + " 条数据，耗时：")
-        print (t1 - t0)
+        root = Insert(root, n[i])
+    t1 = time()
+    # print ('Inserting ...')
+    print ("索引构建完成，总共有 " + str(data_length) + " 条数据，耗时：")
+    print (t1 - t0)
 
-        # # ------------- 搜索节点 --------------------------- #
-        # time_search_start = time()
-        # x = root.Search(merge(n[0].MBR, n[1].MBR))
-        # time_search_end = time()
-        # # print ('Searching ...')
-        # print("检索完成，耗时 :")
-        # print (time_search_end - time_search_start)
+    # # ------------- 搜索节点 --------------------------- #
+    # time_search_start = time()
+    # x = root.Search(merge(n[0].MBR, n[1].MBR))
+    # time_search_end = time()
+    # # print ('Searching ...')
+    # print("检索完成，耗时 :")
+    # print (time_search_end - time_search_start)
 
-        # --------- use performance_test get the avg search time ---- #
-        print(" r 树中 ，m = " + str(k) + " 时 100 条随机检索的平均用时为：")
-        print(performance_test(root, [800, 800], 100))
+    # --------- use performance_test get the avg search time ---- #
+    print(" r 树中 ，m = " + str(k) + " 时 100 条随机检索的平均用时为：")
+    print(performance_test(root, [800, 800], 100))
 
-        # -------------- 节点删除 -------------------------- #
-        # for i in range(100000):
-        #     root = Delete(root, n[i])
-        # t3 = time()
-        # print ('Deleting ...')
-        # print (t3 - t2)
+    # -------------- 节点删除 -------------------------- #
+    # for i in range(100000):
+    #     root = Delete(root, n[i])
+    # t3 = time()
+    # print ('Deleting ...')
+    # print (t3 - t2)
