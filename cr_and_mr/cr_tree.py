@@ -69,10 +69,39 @@ class Rtree(object):
         # 如果当前节点没有父节点，则必然需要产生父节点来容纳分裂的两个节点。
         # def leaf_distance(center, leaf):
         #     return ((leaf.MBR['xmin'] - center.MBR['xmin']) ** 2 + (leaf.MBR['ymin'] - center.MBR['ymin']) ** 2) ** 0.5
-        def _assign_corner(corner, father_node):
+        def _assign_leaf(leaf, father_node):
             # 将 corner 中的节点分配到父节点中
-            for item in corner:
-                father_node.leaves.append(item)
+            father_node.leaves.append(leaf)
+            father_node.MBR = merge(father_node.MBR, leaf.MBR)
+
+        # def _assign_corner(corner, father_node):
+        #     # 将 corner 中的节点分配到父节点中
+        #     for item in corner:
+        #         father_node.leaves.append(item)
+        #         father_node.MBR = merge(father_node.MBR, item.MBR)
+
+        def _add_min_mbr_node(node1, node2):
+            def _mbr_squre(mbr):
+                return abs(mbr['xmax'] - mbr['xmin']) * abs(mbr['ymax'] - mbr['ymin'])
+
+            # 将最小的 mbr 合并
+            # 将节点 1 中的一个元素分配给 2，并且使得 2 的 MBR 最小
+            s = 0
+            t = 0
+
+            # 找到 node1 中使得 node2 面积最小的节点，并且记录坐标
+            for i in range(len(node1.leaves)):
+                if s is 0:
+                    s = _mbr_squre(merge(node1.leaves[i].MBR, node2.MBR))
+                    t = i
+                else:
+                    if _mbr_squre(merge(node1.leaves[i].MBR, node2.MBR)) < s:
+                        t = i
+
+            # 进行插入操作
+            node2.leaves.append(node1.leaves[t])
+            node2.MBR = merge(node2.MBR, node1.leaves[t].MBR)
+            node1.leaves.pop(t)
 
         if self.father is None:
             # 父节点的层级比当前节点多1。
@@ -88,7 +117,7 @@ class Rtree(object):
 
         # 调用PickSeeds为leaf1和leaf2分配子节点
         # self.PickSeeds(leaf1, leaf2)
-        self.PickSeeds(Node1, Node2)
+        # self.PickSeeds(Node1, Node2)
 
         # # 遍历剩余的子节点，进行插入。
         # while len(self.leaves) > 0:
@@ -126,52 +155,67 @@ class Rtree(object):
         # 将节点分配到不同的区域
         for node in self.leaves:
             (ObjXcen, ObjYcen) = (((node.MBR['xmin'] + node.MBR['xmax'])/2), ((node.MBR['ymin'] + node.MBR['ymax'])/2))
+            # if ObjXcen > CovRectXcen:
+            #     if ObjYcen > CovRectYcen:
+            #         corner2.append(node)
+            #     else:
+            #         corner3.append(node)
+            # else:
+            #     if ObjYcen > CovRectYcen:
+            #         corner1.append(node)
+            #     else:
+            #         corner0.append(node)
+
             if ObjXcen > CovRectXcen:
                 if ObjYcen > CovRectYcen:
-                    corner2.append(node)
+                    _assign_leaf(node, Node2)
                 else:
-                    corner3.append(node)
+                    _assign_leaf(node, Node1)
             else:
                 if ObjYcen > CovRectYcen:
-                    corner1.append(node)
+                    # corner1.append(node)
+                    _assign_leaf(node, Node2)
                 else:
-                    corner0.append(node)
+                    # corner0.append(node)
+                    _assign_leaf(node, Node1)
 
-        # 将各个区间的节点进行分配
-        if len(corner0) > len(corner2):
-            _assign_corner(corner0, Node1)
-            _assign_corner(corner2, Node2)
-        else:
-            _assign_corner(corner2, Node1)
-            _assign_corner(corner0, Node2)
-
-        if len(corner1) > len(corner3):
-            _assign_corner(corner3, Node1)
-            _assign_corner(corner1, Node2)
-        else:
-            if len(corner3) > len(corner1):
-                _assign_corner(corner3, Node2)
-                _assign_corner(corner1, Node1)
-            # else: # 出现了相等的情况
-            #     # 当出现了相等的情况下，有以下几个选点原则
-            #     # 1. 最小覆盖原则
-            #     # 2. 最小包含面积原则
-            # 为了提高构建速度，暂时采用直接分配
-            else:
-                _assign_corner(corner3, Node1)
-                _assign_corner(corner1, Node2)
+        # # 将各个区间的节点进行分配
+        # if len(corner0) > len(corner2):
+        #     _assign_corner(corner0, Node1)
+        #     _assign_corner(corner2, Node2)
+        # else:
+        #     _assign_corner(corner2, Node1)
+        #     _assign_corner(corner0, Node2)
+        #
+        # if len(corner1) > len(corner3):
+        #     _assign_corner(corner3, Node1)
+        #     _assign_corner(corner1, Node2)
+        # else:
+        #     if len(corner3) > len(corner1):
+        #         _assign_corner(corner3, Node2)
+        #         _assign_corner(corner1, Node1)
+        #     # else: # 出现了相等的情况
+        #     #     # 当出现了相等的情况下，有以下几个选点原则
+        #     #     # 1. 最小覆盖原则
+        #     #     # 2. 最小包含面积原则
+        #     # 为了提高构建速度，暂时采用直接分配
+        #     else:
+        #         _assign_corner(corner3, Node1)
+        #         _assign_corner(corner1, Node2)
 
         # 因为总共的数目是能够保证分裂的两个子节点都能够有大于 m 的叶子节点数目，
         # 所以不用担心出现一个满足，一个不满足的情况
         # 为了降低时间复杂度，通过直接选取第一个叶子节点的方式进行节点的转移
         # todo:分配子节点的方式有点问题
         while(len(Node1.leaves) < Node1.m):
-            Node1.leaves.append(Node2.leaves[0])
-            Node2.leaves.pop(0)
+            _add_min_mbr_node(Node2, Node1)
+            # Node1.leaves.append(Node2.leaves[0])
+            # Node2.leaves.pop(0)
 
         while(len(Node2.leaves) < Node2.m):
-            Node2.leaves.append(Node1.leaves[0])
-            Node1.leaves.pop(0)
+            _add_min_mbr_node(Node1, Node2)
+            # Node2.leaves.append(Node1.leaves[0])
+            # Node1.leaves.pop(0)
 
         # -------- cbs end ----------------- #
 
@@ -185,130 +229,131 @@ class Rtree(object):
         self.father.leaves.remove(self)
         self.father.leaves.append(Node1)
         self.father.leaves.append(Node2)
+
         self.father.MBR = merge(self.father.MBR, Node1.MBR)
         self.father.MBR = merge(self.father.MBR, Node2.MBR)
 
 
-    # PickSeeds为两组节点分配子节点。
-    # todo:增加质心属性，从而提高 R 树的分裂效率
-    def PickSeeds(self, leaf1, leaf2):
-        """
-        MR 树
-        此版本的改进是通过引入质心的属性来提高整个 R 树的节点分裂效率
-
-        """
-        def leaf_distance(center, leaf):
-            return ((leaf.MBR['xmin'] - center.MBR['xmin']) ** 2 + (leaf.MBR['ymin'] - center.MBR['ymin']) ** 2) ** 0.5
-
-        d = 0
-        t1 = 0
-        t2 = 0
-
-        # # 遍历所有可能的子节点组合，寻找差值最大的项。
-        # for i in range(len(self.leaves)):
-        #     for j in range(i + 1, len(self.leaves)):
-        #         # -------------------------------------------------------- #
-        #         MBR_new = merge(self.leaves[i].MBR, self.leaves[j].MBR) # 合并两个 MBR
-        #         S_new = 1.0 * (MBR_new['xmax'] - MBR_new['xmin']) * (MBR_new['ymax'] - MBR_new['ymin'])
-        #
-        #         S1 = 1.0 * (self.leaves[i].MBR['xmax'] - self.leaves[i].MBR['xmin']) * (self.leaves[i].MBR['ymax'] - self.leaves[i].MBR['ymin'])
-        #         S2 = 1.0 * (self.leaves[j].MBR['xmax'] - self.leaves[j].MBR['xmin']) * (self.leaves[j].MBR['ymax'] - self.leaves[j].MBR['ymin'])
-        #
-        #         if S_new - S1 - S2 > d:
-        #             t1 = i
-        #             t2 = j
-        #             d = S_new - S1 - S2
-        #         # -------------------------------------------------------- #
-
-        # 计算出最小距离点
-        # 通过随机指定两个值，计算点的距离和，找出能够使总体距离和最小的值
-        for i in range(len(self.leaves)):
-            for j in range(i+1, len(self.leaves)):
-
-                sum_of_distance = 0
-                for k in range(len(self.leaves)):
-                    if k is not i and k is not j:
-                        sum_of_distance += min(leaf_distance(self.leaves[i], self.leaves[k]), leaf_distance(self.leaves[j], self.leaves[k]))
-
-                if sum_of_distance > d:
-                    d = sum_of_distance
-                    t1 = i
-                    t2 = j
-
-        # --------- 新的方法 ------------- #
-        # 找出数据中的质心，从而确定中心点
-        # data_list = []
-        #
-        #
-        # distance = 0
-        # addr = []
-        # for i in range(data_list):
-        #     for j in range(data_list):
-        #         pass
-
-        # --------- end ----------------- #
-
-        n2 = self.leaves.pop(t2)
-        n2.father = leaf1
-        leaf1.leaves.append(n2)
-        leaf1.MBR = leaf1.leaves[0].MBR
-
-        n1 = self.leaves.pop(t1)
-        n1.father = leaf2
-        leaf2.leaves.append(n1)
-        leaf2.MBR = leaf2.leaves[0].MBR
-
-    # PickNext为两组节点分配一个子节点。
-    def PickNext(self, leaf1, leaf2):
-        # 距离计算函数
-        def leaf_distance(center, leaf):
-            return ((leaf.MBR['xmin'] - center.MBR['xmin']) ** 2 + (leaf.MBR['ymin'] - center.MBR['ymin']) ** 2) ** 0.5
-
-        # # ------------------- old way -------- #
-        # d = 0
-        # t = 0
-        #
-        # # 遍历子节点，找到插入两组节点后面积增加差值最大的一项。
-        # for i in range(len(self.leaves)):
-        #     d1 = space_increase(merge(leaf1.MBR, self.leaves[i].MBR), leaf1.MBR)
-        #     d2 = space_increase(merge(leaf2.MBR, self.leaves[i].MBR), leaf2.MBR)
-        #     if abs(d1 - d2) > abs(d):
-        #         d = d1 - d2
-        #         t = i
-        #
-        # if d > 0:
-        #     target = self.leaves.pop(t)
-        #     leaf2.MBR = merge(leaf2.MBR, target.MBR)
-        #     target.father = leaf2
-        #     leaf2.leaves.append(target)
-        # else:
-        #     target = self.leaves.pop(t)
-        #     leaf1.MBR = merge(leaf1.MBR, target.MBR)
-        #     target.father = leaf1
-        #     leaf1.leaves.append(target)
-        # # ------------------ old way end --------- #
-
-        # 传统的方法是找出使得面积最大的子节点
-        # 新的方法是找出使得节点更加紧密的子节点
-        # ------------------- new way ------------ #
-        d = 0
-        t = 0
-
-        # 找到一个子节点，分配给一个离它最近的面积
-        if leaf_distance(leaf2, self.leaves[t]) > leaf_distance(leaf1, self.leaves[t]):
-            d = 1
-
-        if d > 0:
-            target = self.leaves.pop(t)
-            leaf2.MBR = merge(leaf2.MBR, target.MBR)
-            target.father = leaf2
-            leaf2.leaves.append(target)
-        else:
-            target = self.leaves.pop(t)
-            leaf1.MBR = merge(leaf1.MBR, target.MBR)
-            target.father = leaf1
-            leaf1.leaves.append(target)
-        # ------------------- new way end --------- #
+    # # PickSeeds为两组节点分配子节点。
+    # # todo:增加质心属性，从而提高 R 树的分裂效率
+    # def PickSeeds(self, leaf1, leaf2):
+    #     """
+    #     MR 树
+    #     此版本的改进是通过引入质心的属性来提高整个 R 树的节点分裂效率
+    #
+    #     """
+    #     # def leaf_distance(center, leaf):
+    #     #     return ((leaf.MBR['xmin'] - center.MBR['xmin']) ** 2 + (leaf.MBR['ymin'] - center.MBR['ymin']) ** 2) ** 0.5
+    #
+    #     d = 0
+    #     t1 = 0
+    #     t2 = 0
+    #
+    #     # 遍历所有可能的子节点组合，寻找差值最大的项。
+    #     for i in range(len(self.leaves)):
+    #         for j in range(i + 1, len(self.leaves)):
+    #             # -------------------------------------------------------- #
+    #             MBR_new = merge(self.leaves[i].MBR, self.leaves[j].MBR) # 合并两个 MBR
+    #             S_new = 1.0 * (MBR_new['xmax'] - MBR_new['xmin']) * (MBR_new['ymax'] - MBR_new['ymin'])
+    #
+    #             S1 = 1.0 * (self.leaves[i].MBR['xmax'] - self.leaves[i].MBR['xmin']) * (self.leaves[i].MBR['ymax'] - self.leaves[i].MBR['ymin'])
+    #             S2 = 1.0 * (self.leaves[j].MBR['xmax'] - self.leaves[j].MBR['xmin']) * (self.leaves[j].MBR['ymax'] - self.leaves[j].MBR['ymin'])
+    #
+    #             if S_new - S1 - S2 > d:
+    #                 t1 = i
+    #                 t2 = j
+    #                 d = S_new - S1 - S2
+    #             # -------------------------------------------------------- #
+    #
+    #     # # 计算出最小距离点
+    #     # # 通过随机指定两个值，计算点的距离和，找出能够使总体距离和最小的值
+    #     # for i in range(len(self.leaves)):
+    #     #     for j in range(i+1, len(self.leaves)):
+    #     #
+    #     #         sum_of_distance = 0
+    #     #         for k in range(len(self.leaves)):
+    #     #             if k is not i and k is not j:
+    #     #                 sum_of_distance += min(leaf_distance(self.leaves[i], self.leaves[k]), leaf_distance(self.leaves[j], self.leaves[k]))
+    #     #
+    #     #         if sum_of_distance > d:
+    #     #             d = sum_of_distance
+    #     #             t1 = i
+    #     #             t2 = j
+    #
+    #     # --------- 新的方法 ------------- #
+    #     # 找出数据中的质心，从而确定中心点
+    #     # data_list = []
+    #     #
+    #     #
+    #     # distance = 0
+    #     # addr = []
+    #     # for i in range(data_list):
+    #     #     for j in range(data_list):
+    #     #         pass
+    #
+    #     # --------- end ----------------- #
+    #
+    #     n2 = self.leaves.pop(t2)
+    #     n2.father = leaf1
+    #     leaf1.leaves.append(n2)
+    #     leaf1.MBR = leaf1.leaves[0].MBR
+    #
+    #     n1 = self.leaves.pop(t1)
+    #     n1.father = leaf2
+    #     leaf2.leaves.append(n1)
+    #     leaf2.MBR = leaf2.leaves[0].MBR
+    #
+    # # PickNext为两组节点分配一个子节点。
+    # def PickNext(self, leaf1, leaf2):
+    #     # 距离计算函数
+    #     def leaf_distance(center, leaf):
+    #         return ((leaf.MBR['xmin'] - center.MBR['xmin']) ** 2 + (leaf.MBR['ymin'] - center.MBR['ymin']) ** 2) ** 0.5
+    #
+    #     # # ------------------- old way -------- #
+    #     # d = 0
+    #     # t = 0
+    #     #
+    #     # # 遍历子节点，找到插入两组节点后面积增加差值最大的一项。
+    #     # for i in range(len(self.leaves)):
+    #     #     d1 = space_increase(merge(leaf1.MBR, self.leaves[i].MBR), leaf1.MBR)
+    #     #     d2 = space_increase(merge(leaf2.MBR, self.leaves[i].MBR), leaf2.MBR)
+    #     #     if abs(d1 - d2) > abs(d):
+    #     #         d = d1 - d2
+    #     #         t = i
+    #     #
+    #     # if d > 0:
+    #     #     target = self.leaves.pop(t)
+    #     #     leaf2.MBR = merge(leaf2.MBR, target.MBR)
+    #     #     target.father = leaf2
+    #     #     leaf2.leaves.append(target)
+    #     # else:
+    #     #     target = self.leaves.pop(t)
+    #     #     leaf1.MBR = merge(leaf1.MBR, target.MBR)
+    #     #     target.father = leaf1
+    #     #     leaf1.leaves.append(target)
+    #     # # ------------------ old way end --------- #
+    #
+    #     # 传统的方法是找出使得面积最大的子节点
+    #     # 新的方法是找出使得节点更加紧密的子节点
+    #     # ------------------- new way ------------ #
+    #     d = 0
+    #     t = 0
+    #
+    #     # 找到一个子节点，分配给一个离它最近的面积
+    #     if leaf_distance(leaf2, self.leaves[t]) > leaf_distance(leaf1, self.leaves[t]):
+    #         d = 1
+    #
+    #     if d > 0:
+    #         target = self.leaves.pop(t)
+    #         leaf2.MBR = merge(leaf2.MBR, target.MBR)
+    #         target.father = leaf2
+    #         leaf2.leaves.append(target)
+    #     else:
+    #         target = self.leaves.pop(t)
+    #         leaf1.MBR = merge(leaf1.MBR, target.MBR)
+    #         target.father = leaf1
+    #         leaf1.leaves.append(target)
+    #     # ------------------- new way end --------- #
 
 
     # AdjustTree自底向上调整R树。
