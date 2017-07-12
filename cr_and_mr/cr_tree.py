@@ -106,11 +106,13 @@ class Rtree(object):
         Node1 = Rtree(level = self.level, m = self.m, M = self.M, father = self.father)
         Node2 = Rtree(level = self.level, m = self.m, M = self.M, father = self.father)
 
-        (CovRectXcen, CovRectYcen) = (((self.MBR['xmin'] + self.MBR['xmax'])/2), ((self.MBR['ymin'] + self.MBR['ymax'])/2))
+        (CovRectXcen, CovRectYcen) = (((self.MBR['xmin'] + self.MBR['xmax'])/2),
+                                      ((self.MBR['ymin'] + self.MBR['ymax'])/2))
 
         # 将节点分配到不同的区域
         for node in self.leaves:
-            (ObjXcen, ObjYcen) = (((node.MBR['xmin'] + node.MBR['xmax'])/2), ((node.MBR['ymin'] + node.MBR['ymax'])/2))
+            (ObjXcen, ObjYcen) = (((node.MBR['xmin'] + node.MBR['xmax'])/2),
+                                  ((node.MBR['ymin'] + node.MBR['ymax'])/2))
 
             if ObjXcen > CovRectXcen:
                 if ObjYcen > CovRectYcen:
