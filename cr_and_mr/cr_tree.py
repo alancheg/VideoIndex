@@ -99,6 +99,7 @@ class Rtree(object):
                         t = i
 
             # 进行插入操作
+            node1.leaves[t].father = node2
             node2.leaves.append(node1.leaves[t])
             node2.MBR = merge(node2.MBR, node1.leaves[t].MBR)
             node1.leaves.pop(t)
@@ -304,7 +305,13 @@ class Rtree(object):
                 Node2.MBR = merge(Node2.MBR, leaf.MBR)
                 leaf.father = Node2
 
-            # _assign_corner(corner[1], Node1)
+        while(len(Node1.leaves) < Node1.m):
+            _add_min_mbr_node(Node2, Node1)
+
+        while (len(Node2.leaves) < Node1.m):
+            _add_min_mbr_node(Node1, Node2)
+
+                # _assign_corner(corner[1], Node1)
             # _assign_corner(corner[0], Node1)
             #
             # _assign_corner(corner[2], Node2)
