@@ -69,7 +69,8 @@ def r_base_test(min = 25, max = 51, length = -1):
     print (t1 - t0)
 
     # --------- use performance_test get the avg search time ---- #
-    print(" r 树中 ，m = " + str(k) + " 时 100 条随机检索的平均用时为：")
+    print("m = " + str(min) + "; M = " + str(max))
+    print(" r 树中 100 条随机检索的平均用时为：")
     print(performance_test(root, [800, 800], 100))
 
     # -------------- 节点删除 -------------------------- #

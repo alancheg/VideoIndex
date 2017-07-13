@@ -5,9 +5,6 @@
 考虑到不同的 m 和 M 值对程序的影响，
 因此需要构建一个能够比较不同m 和 M 值下各种算法之间构建时间和检索时间的方法
 """
-import matplotlib
-from r_tree_base import rtest
-from cr_and_mr import crtest, mrtest
 
 
 def plot_build_time():
