@@ -118,9 +118,16 @@ class Rtree(object):
         此版本的改进是通过引入质心的属性来提高整个 R 树的节点分裂效率
 
         """
-        def leaf_distance(center, leaf):
-            return ((leaf.MBR['xmin'] - center.MBR['xmin']) ** 2 + (leaf.MBR['ymin'] - center.MBR['ymin']) ** 2) ** 0.5
+        # todo: 如何简化距离度量函数
+        # 减少平方和立方的数量应该可以提高算法的速度
 
+        # def leaf_distance(center, leaf):
+        #     # 距离度量函数 v1 ，多次的平方和开根号容易导致时间增加
+        #     return ((leaf.MBR['xmin'] - center.MBR['xmin']) ** 2 + (leaf.MBR['ymin'] - center.MBR['ymin']) ** 2) ** 0.5
+
+        def leaf_distance(center, leaf):
+            # 距离度量函数 v2 ，通过将距离换乘面积来减少时间复杂度
+            return abs((leaf.MBR['xmin'] - center.MBR['xmin']) * (leaf.MBR['ymin'] - center.MBR['ymin']))
 
         d = 0
         t1 = 0
