@@ -365,7 +365,7 @@ class Rtree(object):
             p = p.father
 
 
-#Search搜索给定的矩形范围。
+    # Search搜索给定的矩形范围。
     def Search(self, MBR):
         result = []
         #如果已经到达叶子节点，则在result中直接添加对象。
@@ -382,7 +382,7 @@ class Rtree(object):
             return result
 
 
-#FindLeaf查找给定的对象。
+    # FindLeaf查找给定的对象。
     def FindLeaf(self, node):
         result = []
         #如果当前节点不是叶子节点，则递归寻找所有包含目标MBR的子节点。
@@ -400,7 +400,7 @@ class Rtree(object):
                     return self
 
 
-#CondenseTree对树进行压缩。
+    # CondenseTree对树进行压缩。
     def CondenseTree(self):
         #Q用来保存要插入的节点。
         Q = []
@@ -423,7 +423,7 @@ class Rtree(object):
             q = Insert(q, node)
 
 
-#CondenseRoot用来对根节点进行压缩。
+    # CondenseRoot用来对根节点进行压缩。
     def CondenseRoot(self):
         p = self
         q = p
